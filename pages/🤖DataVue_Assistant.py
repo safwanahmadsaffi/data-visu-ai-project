@@ -1,1025 +1,135 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import plotly.express as px
-import PIL.Image as Image
-
-
-
-
-import streamlit as st
-from streamlit.components.v1 import html
-
 from groq import Groq
-import io
-import base64
+import os
+from datetime import datetime
 
-# Initialize Groq client with API key
-api_key = st.secrets["GROK_API_KEY"]
-client = Groq(api_key=api_key)
-
-# Set page config
-st.set_page_config(page_title="DataVue - Advanced EDA", layout="wide")
-
-# Load custom CSS
 def load_css():
     st.markdown("""
     <style>
-        .stApp {
-            background-color: #f0f8ff; /* Light background color for the entire app */
-        }
-        .main-header {
-            color: #1e90ff; 
-            font-size: 40px; 
-            font-weight: bold; 
-            text-align: center; 
-            margin-bottom: 30px;
-        }
-        .sub-header {
-            color: #4169e1; 
-            font-size: 30px; 
-            font-weight: bold; 
-            margin-top: 20px; 
-            margin-bottom: 10px;
-        }
-        .section {
-            background-color: #e6f2ff; 
-            border-radius: 10px; 
-            padding: 20px; 
-            margin-bottom: 20px;
-        }
-        .button {
-            background-color: #1e90ff; 
-            color: white; 
-            font-weight: bold; 
-            border-radius: 5px; 
-            padding: 10px 20px;
-        }
-        .button:hover {
-            background-color: #4169e1;
-        }
-        .error {
-            color: #ff4500; 
-            font-weight: bold;
-        }
-        .success {
-            color: #32cd32; 
-            font-weight: bold;
-        }
-        .stSidebar {
-            background-color: #e6f2ff; /* Sidebar background color */
-        }
-    </style>
-    """, unsafe_allow_html=True)
-
-# Load CSS
-load_css()
-
-# Helper Functions
-def half_divider():
-    col1, col2, col3 = st.columns([0.2, 1, 0.2])
-    with col2:
-        st.markdown("<hr style='border-top: 2px solid #000000;'>", unsafe_allow_html=True)
-
-def new_line():
-    st.markdown("<br>", unsafe_allow_html=True)
-
-# Congratulation Button with Balloons
-def congratulation(key):
-    col1, col2, col3 = st.columns([0.7, 0.7, 0.7])
-    if col2.button("🎉 Congratulation", key=key):
-        st.balloons()
-        st.markdown("<h3 style='color:#000000; text-align:center;'>🥳 You Have Successfully Finished This Phase!</h3>", unsafe_allow_html=True)
-
-# Sidebar
-with st.sidebar:
-    st.markdown("<h2 style='text-align: center; color: #000000;'>🔍 DataVue</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #000000;'>Your comprehensive guide to mastering Data Science and Machine Learning!</p>", unsafe_allow_html=True)
-    st.markdown("<hr style='border-top: 1px solid #000000;'>", unsafe_allow_html=True)
-
-# Title Page with Custom Font
-st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap');
-    h1 {
-        font-family: 'Roboto', sans-serif;
-        color: #000000;
+    .stApp {
+        background-color: #f0f8ff;
+    }
+    .main-header {
+        color: #1e90ff;
+        font-size: 40px;
+        font-weight: bold;
         text-align: center;
+        margin-bottom: 30px;
+    }
+    .subheader {
+        color: #4169e1;
+        font-size: 24px;
+        font-weight: bold;
+        margin-top: 20px;
+        margin-bottom: 10px;
+    }
+    .ai-response {
+        background-color: #e6f2ff;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
     }
     </style>
-    <h1>📊 Welcome to DataVue</h1>
-""", unsafe_allow_html=True)
-
-new_line()
-st.markdown("<h4 style='text-align: center; color: #000000;'>Empowering you to unlock the potential of Data Science and Machine Learning.</h4>", unsafe_allow_html=True)
-new_line()
-st.markdown("<h5 style='text-align: center; color: #000000;'>Select a topic below to dive in.</h5>", unsafe_allow_html=True)
-half_divider()
-
-# Tabs with Trendy Layout and Emojis
-tab_titles = [
-    '🗺️ Overview', 
-    '🧭 Exploratory Data Analysis (EDA)', 
-    '‍📀‍‍‍‍ Missing Values', 
-    '🔠 Categorical Features', 
-    '🧬 Scaling & Transformation', 
-    '💡 Feature Engineering', 
-    '✂️ Splitting the Data', 
-    '🧠 Machine Learning Models'
-]
-
-tabs = st.tabs(tab_titles)
-
-# Overview Tab Content
-with tabs[0]:
-    new_line()
-    st.markdown("<h2 style='text-align: center; color: #000000;'>🗺️ Overview</h2>", unsafe_allow_html=True)
-    new_line()
-    
-    st.markdown("""
-    <div style='font-size: 18px; line-height: 1.8; color: #000000;'>
-        Welcome to DataVue, your modern companion on the journey to mastering Data Science and Machine Learning. Here's an overview of the essential steps in the process:
-        <ul style='list-style-type: none; padding-left: 0;'>
-            <li>📦 <strong style='color: #000000;'>Data Collection</strong>: Gather data from various sources like CSV files, databases, or APIs. A popular resource is <a href="https://www.kaggle.com/" target="_blank" style="color:#000000;">Kaggle</a>.</li>
-            <br>
-            <li>🧹 <strong style='color: #000000;'>Data Cleaning</strong>: Clean the data by removing duplicates, handling missing values, and addressing outliers. Clean data is crucial for building effective models.</li>
-            <br>
-            <li>⚙️ <strong style='color: #000000;'>Data Preprocessing</strong>: Transform data into a suitable format for analysis. This includes processing categorical features, numerical features, scaling, and transformation.</li>
-            <br>
-            <li>💡 <strong style='color: #000000;'>Feature Engineering</strong>: Manipulate features to improve model performance. This step involves feature extraction, transformation, and selection.</li>
-            <br>
-            <li>✂️ <strong style='color: #000000;'>Splitting the Data</strong>: Split the data into training, validation, and testing sets. The training set is for model training, the validation set for hyperparameter tuning, and the testing set for evaluation.</li>
-            <br>
-            <li>🧠 <strong style='color: #000000;'>Building Machine Learning Models</strong>: Build models using algorithms like Linear Regression, Logistic Regression, Decision Trees, Random Forests, SVM, KNN, and Neural Networks.</li>
-            <br>
-            <li>⚖️ <strong style='color: #000000;'>Evaluating Machine Learning Models</strong>: Evaluate models using metrics like accuracy, precision, recall, F1 score, MSE, RMSE, MAE, and R-squared.</li>
-            <br>
-            <li>📐 <strong style='color: #000000;'>Tuning Hyperparameters</strong>: Optimize hyperparameters to enhance model performance. Examples include tuning the number of estimators for Random Forest or the number of neighbors for KNN.</li>
-        </ul>
-    </div>
     """, unsafe_allow_html=True)
-    new_line()
-# Exploratory Data Analysis (EDA)
-with tabs[1]:
-    new_line()
-    st.markdown("<h2 style='text-align: center;' id='eda'>🧭 Exploratory Data Analysis (EDA)</h2>", unsafe_allow_html=True)
-    new_line()
-    st.markdown(
-        "Exploratory Data Analysis (EDA) is the process of analyzing data sets to summarize their main characteristics, often with visual methods. "
-        "EDA helps us understand the data before formal modeling or hypothesis testing. It’s crucial for making informed decisions about the right models and avoiding errors. "
-        "It also aids in finding patterns, spotting anomalies, testing hypotheses, and checking assumptions through summary statistics and graphical representations.",
-        unsafe_allow_html=True
-    )
-    new_line()
 
-    st.markdown("<h6>The following are some of the key steps in EDA:</h6>", unsafe_allow_html=True)
-    st.markdown("- **Data Collection:** Gather data from various sources like CSV files, databases, APIs, etc. 🌐", unsafe_allow_html=True)
-    st.markdown("- **Data Cleaning:** Clean the data by removing duplicates, handling missing values, and dealing with outliers. 🧹", unsafe_allow_html=True)
-    st.markdown("- **Data Preprocessing:** Transform the data into a suitable format for analysis, including handling categorical features, numerical features, scaling, and transformation. 🔄", unsafe_allow_html=True)
-    st.markdown("- **Data Visualization:** Visualize the data using plots such as bar plots, histograms, scatter plots, etc. 📊", unsafe_allow_html=True)
-    st.markdown("- **Data Analysis:** Analyze the data using statistical methods like mean, median, mode, and standard deviation. 📈", unsafe_allow_html=True)
-    st.markdown("- **Data Interpretation:** Interpret the data to draw conclusions and make decisions. 🧠", unsafe_allow_html=True)
-    new_line()
-
-    st.markdown("<h6>Key Questions Answered in EDA:</h6>", unsafe_allow_html=True)
-    st.markdown("- **What is the size of the data?**", unsafe_allow_html=True)
-    st.code("""df = pd.read_csv('data.csv') 
-df.shape""", language="python")
-
-    st.markdown("- **What are the features in the data?**", unsafe_allow_html=True)
-    st.code("""df.columns""", language="python")
-
-    st.markdown("- **What are the data types of the features?**", unsafe_allow_html=True)
-    st.code("""df.dtypes""", language="python")
-
-    st.markdown("- **What are the missing values in the data?**", unsafe_allow_html=True)
-    st.code("""df.isnull().sum()""", language="python")
-
-    st.markdown("- **What are the outliers in the data?**", unsafe_allow_html=True)
-    st.code("""df.describe()""", language="python")
-
-    st.markdown("- **What are the correlations between the features?**", unsafe_allow_html=True)
-    st.code("""df.corr()""", language="python")
-
-    st.markdown("- **What are the distributions of the features?**", unsafe_allow_html=True)
-    st.code("""df.hist()""", language="python")
-
-    st.divider()
-
-import streamlit as st
-import pandas as pd
-import plotly.express as px
-from sklearn.datasets import load_iris
-
-def new_line():
-    st.write("\n")
-
-# EDA with selected dataset
-# new_line()
-# st.subheader("Select a Dataset to Perform EDA on")
-# # dataset = st.selectbox("Select a dataset", ["Select", "Iris", "Titanic", "Wine Quality"])
-# dataset=st.selectbox("Select a dataset", ["Select", "Iris", "Titanic", "Wine Quality"], key="EDA")
-
-# Perform Missing Values on the Dataset
-st.divider()
-st.markdown("#### Select Dataset to Perform  EDA ")
-dataset = st.selectbox("Select dataset", ["Select", "Iris", "Titanic", "Wine Quality"])
+def ai_assistant():
+    load_css()
     
-new_line()
-
-if dataset == "Iris":
-    # Iris Dataset
-    st.markdown(
-        "The Iris dataset is a classic dataset in machine learning, introduced by Ronald Fisher in 1936. It consists of 150 samples of three Iris species with four features each: sepal length, sepal width, petal length, and petal width. 🌸"
-        " It's often used in classification and clustering tasks and is available in the scikit-learn library.",
-        unsafe_allow_html=True
-    )
-    new_line()
-
-    # Perform EDA Process
-    iris = load_iris()
-    df = pd.DataFrame(iris.data, columns=iris.feature_names)
-    df['target'] = iris.target
-    df['target'] = df['target'].apply(lambda x: iris.target_names[x])
-    df['target'] = df['target'].astype('category')
-
-    # Read the data
-    st.subheader("Read the Data")
-    st.write("You can read the data using the following code:")
-    st.code("""from sklearn.datasets import load_iris
-import pandas as pd
-iris = load_iris()
-df = pd.DataFrame(iris.data, columns=iris.feature_names)
-df['target'] = iris.target
-df['target'] = df['target'].apply(lambda x: iris.target_names[x])
-df['target'] = df['target'].astype('category')""", language="python")
-    st.write(df)
-
-    # Data Size
-    st.subheader("Data Size")
-    st.write("The size of the data is:")
-    st.code("""df.shape""", language="python")
-    st.write(df.shape)
-    st.markdown("The data has 150 rows and 5 columns.")
-    new_line()
-
-    # Data Types
-    st.subheader("Data Types")
-    st.write("The data types of the features are:")
-    st.code("""df.dtypes""", language="python")
-    st.write(df.dtypes)
-    st.markdown("The data has 4 numerical features and 1 categorical feature.")
-    new_line()
-
-    # Missing Values
-    st.subheader("Missing Values")
-    st.write("The missing values in the data are:")
-    st.code("""df.isnull().sum()""", language="python")
-    st.write(df.isnull().sum())
-    st.markdown("The data has no missing values.")
-    new_line()
-
-    # Description
-    st.subheader("Description")
-    st.write("The descriptive statistics of the data are:")
-    st.code("""df.describe()""", language="python")
-    st.write(df.describe())
-    st.markdown("The `.describe()` method summarizes the central tendency, dispersion, and shape of a dataset’s distribution, excluding NaN values.")
-    new_line()
-
-    # Distribution of Features
-    st.subheader("Distribution of Features")
-    st.write("The distribution of each feature is shown below:")
-
-    for feature in iris.feature_names:
-        st.markdown(f"<h6>{feature.capitalize()} (cm)</h6>", unsafe_allow_html=True)
-        st.code(f"""fig = px.histogram(df, x='{feature}', marginal='box')
-fig.show()""", language="python")
-        fig = px.histogram(df, x=feature, marginal='box')
-        st.write(fig)
-        new_line()
-
-    # Relationship between Features
-    st.subheader("Relationship between Features")
-    st.write("The relationship between pairs of features is visualized below:")
-
-    scatter_plots = [
-        ('sepal length (cm)', 'sepal width (cm)'),
-        ('sepal length (cm)', 'petal length (cm)'),
-        ('sepal length (cm)', 'petal width (cm)'),
-        ('sepal width (cm)', 'petal length (cm)')
+    st.markdown("<h1 class='main-header'>DataVue</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size: 18px;'>Your AI Assistant for Data Science and EDA</p>", unsafe_allow_html=True)
+    
+    
+    # Initialize Groq client
+    try:
+        api_key = st.secrets["GROQ_API_KEY"]
+        client = Groq(api_key=api_key)
+    except Exception as e:
+        st.error(f"Error initializing Groq client: {str(e)}")
+        return
+    
+    # Example questions
+    example_questions = [
+        "How do I perform data cleaning in Python?",
+        "What are the best visualization libraries for EDA?",
+        "Can you explain the concept of feature engineering?",
+        "How do I handle missing data in a dataset?",
+        "What statistical tests should I use for hypothesis testing?",
     ]
-
-    for x, y in scatter_plots:
-        st.markdown(f"<h6>{x.capitalize()} vs {y.capitalize()}</h6>", unsafe_allow_html=True)
-        st.code(f"""fig = px.scatter(df, x='{x}', y='{y}', color='target')
-fig.show()""", language="python")
-        fig = px.scatter(df, x=x, y=y, color='target')
-        st.write(fig)
-        new_line()
-
-    # Correlation Matrix
-    st.subheader("Correlation Matrix")
-    st.write("The correlation matrix is visualized below:")
-    st.code("""fig = px.imshow(df[iris.feature_names].corr(), color_continuous_scale='Blues')
-fig.show()""", language="python")
-    fig = px.imshow(df[iris.feature_names].corr(), color_continuous_scale='Blues')
-    st.write(fig)
-    new_line()
-
-    # Distribution of the Target
-    st.subheader("Distribution of the Target")
-    st.write("The distribution of the target is shown below:")
-    st.code("""fig = px.histogram(df, x='target')
-fig.show()""", language="python")
-    fig = px.histogram(df, x='target')
-    st.write(fig)
-    st.markdown("The target is balanced, with each class having an equal number of samples.")
-    new_line()
-
-    # Problem Type
-    st.subheader("Problem Type")
-    st.write("The problem type is:")
-    st.code("""df['target'].value_counts()""", language="python")
-    st.write(df['target'].value_counts())
-    st.markdown("This is a classification problem because the target variable is categorical.")
-    new_line()
-
-    # Conclusion
-    st.subheader("Conclusion")
-    st.write(
-        "From the EDA process, we can conclude the following:"
-        "- The data is clean and ready for further analysis."
-        "- It has 150 rows and 5 columns."
-        "- There are 4 numerical features and 1 categorical feature."
-        "- There are no missing values or outliers."
-        "- The target variable is balanced."
-    )
-    new_line()
-
-    st.write("For more information, check out these resources:")
-    st.markdown("- [Introduction to EDA](https://towardsdatascience.com/what-is-exploratory-data-analysis-eda-87f48d2a83fe)")
-    st.markdown("- [Iris Dataset Overview](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_iris.html)")
-    new_line()
-
-elif dataset == "Titanic":
-    # Titanic Dataset
-    st.markdown(
-        "The Titanic dataset is a multivariate dataset that contains data about the passengers of the Titanic. It consists of 891 samples of passengers with various features such as age, sex, and class. This dataset is frequently used for classification tasks to predict survival rates and is widely utilized in data mining and machine learning examples.",
-        unsafe_allow_html=True
-    )
-    new_line()
-
-    # Perform EDA Process
-    try:
-        import pandas as pd
-        import plotly.express as px
-        import seaborn as sns
-        import matplotlib.pyplot as plt
-        import numpy as np
-
-        # Read the dataset
-        titanic = pd.read_csv('https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv')
-
-        # Read the data
-        st.subheader("Read the Data")
-        st.write("You can read the data using the following code:")
-        st.code("""import pandas as pd
-titanic = pd.read_csv('https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv')""", language="python")
-        st.write(titanic.head())
-        new_line()
-
-        # Data Size
-        st.subheader("Data Size")
-        st.write("The size of the data is:")
-        st.code("""titanic.shape""", language="python")
-        st.write(f"The data has {titanic.shape[0]} rows and {titanic.shape[1]} columns.")
-        new_line()
-
-        # Data Types
-        st.subheader("Data Types")
-        st.write("The data types of the features are:")
-        st.code("""titanic.dtypes""", language="python")
-        st.write(titanic.dtypes)
-        new_line()
-
-        # Missing Values
-        st.subheader("Missing Values")
-        st.write("The missing values in the data are:")
-        st.code("""titanic.isnull().sum()""", language="python")
-        st.write(titanic.isnull().sum())
-        st.markdown("The dataset contains missing values in several columns. It is important to handle these before further analysis.")
-        new_line()
-
-        # Descriptive Statistics
-        st.subheader("Descriptive Statistics")
-        st.write("The descriptive statistics of the data are:")
-        st.code("""titanic.describe(include='all')""", language="python")
-        st.write(titanic.describe(include='all'))
-        new_line()
-
-        # Distribution of Features
-        st.subheader("Distribution of Features")
-        st.write("The distribution of key features is shown below:")
-
-        # Numerical Features Distribution
-        numerical_features = ['Age', 'Fare']
-        for feature in numerical_features:
-            st.markdown(f"<h6>{feature.capitalize()}</h6>", unsafe_allow_html=True)
-            st.code(f"""fig = px.histogram(titanic, x='{feature}', marginal='box', title='Distribution of {feature.capitalize()}')
-fig.update_layout(bargap=0.1)
-fig.show()""", language="python")
-            fig = px.histogram(titanic, x=feature, marginal='box', title=f'Distribution of {feature.capitalize()}')
-            fig.update_layout(bargap=0.1)
-            st.write(fig)
-            new_line()
-
-        # Categorical Features Distribution
-        categorical_features = ['Sex', 'Embarked', 'Pclass']
-        for feature in categorical_features:
-            st.markdown(f"<h6>{feature.capitalize()}</h6>", unsafe_allow_html=True)
-            st.code(f"""fig = px.histogram(titanic, x='{feature}', title='Distribution of {feature.capitalize()}')
-fig.update_layout(bargap=0.1)
-fig.show()""", language="python")
-            fig = px.histogram(titanic, x=feature, title=f'Distribution of {feature.capitalize()}')
-            fig.update_layout(bargap=0.1)
-            st.write(fig)
-            new_line()
-
-        # Relationship between Features
-        st.subheader("Relationship between Features")
-        st.write("The relationships between pairs of features are visualized below:")
-
-        scatter_plots = [
-            ('Age', 'Fare'),
-            ('Age', 'Pclass'),
-            ('Fare', 'Pclass')
-        ]
-
-        for x, y in scatter_plots:
-            st.markdown(f"<h6>{x.capitalize()} vs {y.capitalize()}</h6>", unsafe_allow_html=True)
-            st.code(f"""fig = px.scatter(titanic, x='{x}', y='{y}', color='Survived', title='{x.capitalize()} vs {y.capitalize()}')
-fig.update_layout(title_font_size=20, title_x=0.5)
-fig.show()""", language="python")
-            fig = px.scatter(titanic, x=x, y=y, color='Survived', title=f'{x.capitalize()} vs {y.capitalize()}')
-            fig.update_layout(title_font_size=20, title_x=0.5)
-            st.write(fig)
-            new_line()
-
-#         # Correlation Matrix
-#         st.subheader("Correlation Matrix")
-#         st.write("The correlation matrix of numerical features is visualized below:")
-#         st.code("""fig = px.imshow(titanic.corr(), color_continuous_scale='Blues', title='Correlation Matrix')
-# fig.update_layout(title_font_size=20, title_x=0.5)
-# fig.show()""", language="python")
-#         fig = px.imshow(titanic.corr(), color_continuous_scale='Blues', title='Correlation Matrix')
-#         fig.update_layout(title_font_size=20, title_x=0.5)
-#         st.write(fig)
-#         new_line()
-
-        # Target Variable Distribution
-        st.subheader("Distribution of the Target")
-        st.write("The distribution of the target variable (Survived) is shown below:")
-        st.code("""fig = px.histogram(titanic, x='Survived', title='Distribution of Survival')
-fig.update_layout(bargap=0.1)
-fig.show()""", language="python")
-        fig = px.histogram(titanic, x='Survived', title='Distribution of Survival')
-        fig.update_layout(bargap=0.1)
-        st.write(fig)
-        new_line()
-
-        # Additional Analysis: Survival by Pclass and Sex
-        st.subheader("Survival Rate by Pclass and Sex")
-        st.write("The survival rate by passenger class and sex is shown below:")
-
-        # Survival Rate by Pclass
-        st.markdown("<h6>Survival Rate by Passenger Class</h6>", unsafe_allow_html=True)
-        st.code("""fig = px.bar(titanic.groupby('Pclass')['Survived'].mean().reset_index(), x='Pclass', y='Survived', title='Survival Rate by Passenger Class')
-fig.update_layout(title_font_size=20, title_x=0.5)
-fig.show()""", language="python")
-        fig = px.bar(titanic.groupby('Pclass')['Survived'].mean().reset_index(), x='Pclass', y='Survived', title='Survival Rate by Passenger Class')
-        fig.update_layout(title_font_size=20, title_x=0.5)
-        st.write(fig)
-        new_line()
-
-        # Survival Rate by Sex
-        st.markdown("<h6>Survival Rate by Sex</h6>", unsafe_allow_html=True)
-        st.code("""fig = px.bar(titanic.groupby('Sex')['Survived'].mean().reset_index(), x='Sex', y='Survived', title='Survival Rate by Sex')
-fig.update_layout(title_font_size=20, title_x=0.5)
-fig.show()""", language="python")
-        fig = px.bar(titanic.groupby('Sex')['Survived'].mean().reset_index(), x='Sex', y='Survived', title='Survival Rate by Sex')
-        fig.update_layout(title_font_size=20, title_x=0.5)
-        st.write(fig)
-        new_line()
-
-        # Problem Type
-        st.subheader("Problem Type")
-        st.write("The problem type is:")
-        st.code("""titanic['Survived'].value_counts()""", language="python")
-        st.write(titanic['Survived'].value_counts())
-        st.markdown("This is a classification problem because the target variable 'Survived' is categorical.")
-        new_line()
-
-        # Conclusion
-        st.subheader("Conclusion")
-        st.write(
-            "From the EDA process, we can conclude the following:"
-            "- The dataset contains both numerical and categorical features."
-            "- There are missing values in several columns that need to be addressed."
-            "- Various features are analyzed, including distributions, correlations, and relationships."
-            "- Survival rates vary by passenger class and sex."
-            "- This is a classification problem focusing on predicting survival status."
-        )
-        new_line()
-
-        st.write("For more information, check out these resources:")
-        st.markdown("- [Introduction to EDA](https://towardsdatascience.com/what-is-exploratory-data-analysis-eda-87f48d2a83fe)")
-        st.markdown("- [Titanic Dataset Overview](https://www.kaggle.com/c/titanic)")
-        st.markdown("- [Data Cleaning and Feature Engineering](https://towardsdatascience.com/data-cleaning-and-feature-engineering-2f7c85cba067)")
-        new_line()
-
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
-
-
-
-
-
-
-
-
-
-
-
-elif dataset == "Wine Quality":
-    # Wine Quality Dataset
-    st.markdown(
-        "The Wine Quality dataset contains information about red and white wines with various physicochemical properties and a quality rating. The dataset is used for regression and classification tasks. It is available from the UCI Machine Learning Repository and is useful for analyzing and predicting wine quality.",
-        unsafe_allow_html=True
-    )
-    new_line()
-
-    # Perform EDA Process
-    try:
-        import pandas as pd
-        import plotly.express as px
-        import seaborn as sns
-        import matplotlib.pyplot as plt
-        import numpy as np
-
-        # Load the dataset
-        red_wine_url = "https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv"
-        white_wine_url = "https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv"
-
-        red_wine = pd.read_csv(red_wine_url, delimiter=';')
-        white_wine = pd.read_csv(white_wine_url, delimiter=';')
-
-        # Combine the datasets for unified analysis
-        red_wine['type'] = 'Red'
-        white_wine['type'] = 'White'
-        wine = pd.concat([red_wine, white_wine], ignore_index=True)
-
-        # Define numerical features
-        numerical_features = wine.select_dtypes(include=[np.number]).columns.tolist()
-
-        # Read the data
-        st.subheader("Read the Data")
-        st.write("You can read the data using the following code:")
-        st.code("""import pandas as pd
-
-# Load the dataset from UCI repository
-red_wine_url = "https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv"
-white_wine_url = "https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv"
-
-red_wine = pd.read_csv(red_wine_url, delimiter=';')
-white_wine = pd.read_csv(white_wine_url, delimiter=';')
-
-# Combine the datasets
-red_wine['type'] = 'Red'
-white_wine['type'] = 'White'
-wine = pd.concat([red_wine, white_wine], ignore_index=True)""", language="python")
-        st.write(wine.head())
-        new_line()
-
-        # Data Size
-        st.subheader("Data Size")
-        st.write("The size of the data is:")
-        st.code("""wine.shape""", language="python")
-        st.write(f"The data has {wine.shape[0]} rows and {wine.shape[1]} columns.")
-        new_line()
-
-        # Data Types
-        st.subheader("Data Types")
-        st.write("The data types of the features are:")
-        st.code("""wine.dtypes""", language="python")
-        st.write(wine.dtypes)
-        new_line()
-
-        # Missing Values
-        st.subheader("Missing Values")
-        st.write("The missing values in the data are:")
-        st.code("""wine.isnull().sum()""", language="python")
-        st.write(wine.isnull().sum())
-        st.markdown("The dataset contains no missing values, so it is ready for analysis.")
-        new_line()
-
-        # Descriptive Statistics
-        st.subheader("Descriptive Statistics")
-        st.write("The descriptive statistics of the data are:")
-        st.code("""wine.describe()""", language="python")
-        st.write(wine.describe())
-        new_line()
-
-        # Distribution of Features
-        st.subheader("Distribution of Features")
-        st.write("The distribution of key features is shown below:")
-
-        # Dropdown for feature selection
-        selected_feature = st.selectbox("Select a feature to display:", options=numerical_features)
-        
-        if selected_feature:
-            st.markdown(f"<h6>{selected_feature.replace('_', ' ').capitalize()}</h6>", unsafe_allow_html=True)
-            st.code(f"""fig = px.histogram(wine, x='{selected_feature}', color='type', marginal='box', title='Distribution of {selected_feature.replace("_", " ").capitalize()}')
-fig.update_layout(bargap=0.1)
-fig.show()""", language="python")
-            fig = px.histogram(wine, x=selected_feature, color='type', marginal='box', title=f'Distribution of {selected_feature.replace("_", " ").capitalize()}')
-            fig.update_layout(bargap=0.1)
-            st.write(fig)
-            new_line()
-
-        # Categorical Features Distribution
-        st.subheader("Distribution of Quality Ratings")
-        st.write("The distribution of wine quality ratings is shown below:")
-        st.code("""fig = px.histogram(wine, x='quality', color='type', title='Distribution of Wine Quality Ratings')
-fig.update_layout(bargap=0.1)
-fig.show()""", language="python")
-        fig = px.histogram(wine, x='quality', color='type', title='Distribution of Wine Quality Ratings')
-        fig.update_layout(bargap=0.1)
-        st.write(fig)
-        new_line()
-
-        # Relationship between Features
-        st.subheader("Relationship between Features")
-        st.write("The relationships between pairs of features are visualized below:")
-
-        # Dropdown for scatter plot selection
-        x_feature = st.selectbox("Select x-axis feature:", options=numerical_features)
-        y_feature = st.selectbox("Select y-axis feature:", options=numerical_features)
-
-        if x_feature and y_feature:
-            st.markdown(f"<h6>{x_feature.replace('_', ' ').capitalize()} vs {y_feature.replace('_', ' ').capitalize()}</h6>", unsafe_allow_html=True)
-            st.code(f"""fig = px.scatter(wine, x='{x_feature}', y='{y_feature}', color='type', title='{x_feature.replace("_", " ").capitalize()} vs {y_feature.replace("_", " ").capitalize()}')
-fig.update_layout(title_font_size=20, title_x=0.5)
-fig.show()""", language="python")
-            fig = px.scatter(wine, x=x_feature, y=y_feature, color='type', title=f'{x_feature.replace("_", " ").capitalize()} vs {y_feature.replace("_", " ").capitalize()}')
-            fig.update_layout(title_font_size=20, title_x=0.5)
-            st.write(fig)
-            new_line()
-
-        # Correlation Matrix (Numerical Features Only)
-        st.subheader("Correlation Matrix")
-        st.write("The correlation matrix of numerical features is visualized below:")
-        numerical_data = wine[numerical_features]  # Select only numerical features
-        st.code("""fig = px.imshow(numerical_data.corr(), color_continuous_scale='Blues', title='Correlation Matrix')
-fig.update_layout(title_font_size=20, title_x=0.5)
-fig.show()""", language="python")
-        fig = px.imshow(numerical_data.corr(), color_continuous_scale='Blues', title='Correlation Matrix')
-        fig.update_layout(title_font_size=20, title_x=0.5)
-        st.write(fig)
-        new_line()
-
-        # Target Variable Analysis
-        st.subheader("Quality Ratings by Type")
-        st.write("The average quality ratings for red and white wines are shown below:")
-
-        # Quality Ratings by Type
-        st.markdown("<h6>Average Quality Ratings by Wine Type</h6>", unsafe_allow_html=True)
-        st.code("""fig = px.bar(wine.groupby('type')['quality'].mean().reset_index(), x='type', y='quality', title='Average Quality Ratings by Wine Type')
-fig.update_layout(title_font_size=20, title_x=0.5)
-fig.show()""", language="python")
-        fig = px.bar(wine.groupby('type')['quality'].mean().reset_index(), x='type', y='quality', title='Average Quality Ratings by Wine Type')
-        fig.update_layout(title_font_size=20, title_x=0.5)
-        st.write(fig)
-        new_line()
-
-        # Problem Type
-        st.subheader("Problem Type")
-        st.write("The problem type is:")
-        st.code("""wine['quality'].value_counts()""", language="python")
-        st.write(wine['quality'].value_counts())
-        st.markdown("This is a regression problem if predicting quality ratings, or a classification problem if categorizing quality ratings into discrete classes.")
-        new_line()
-
-        # Conclusion
-        st.subheader("Conclusion")
-        st.write(
-            "From the EDA process, we can conclude the following:"
-            "- The dataset contains various physicochemical features and quality ratings for red and white wines."
-            "- The data includes both numerical and categorical features."
-            "- Various features have been analyzed through their distributions, relationships, and correlations."
-            "- Quality ratings vary between red and white wines, with different average ratings."
-            "- The problem can be approached as either a regression or classification problem depending on the target variable."
-        )
-        new_line()
-
-        st.write("For more information, check out these resources:")
-        st.markdown("- [Introduction to Exploratory Data Analysis (EDA)](https://towardsdatascience.com/introduction-to-exploratory-data-analysis-eda-8727be46c918)")
-        st.markdown("- [Feature Engineering and Model Building](https://towardsdatascience.com/feature-engineering-and-data-preprocessing-for-machine-learning-dfd637d6bce6)")
-        new_line()
-
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
-
-
-
-
-
-
-
-
-
-
-
-# Missing Values
-with tabs[2]:
-
-    new_line()
-    st.markdown("<h2 align='center'>📀 Missing Values</h2>", unsafe_allow_html=True)
     
-    # What are Missing Values?
-    new_line()
-    st.markdown("Missing values are entries that are absent for a variable in the dataset, often represented by `NaN` or `None`. They are common in real-world datasets due to human errors, data collection issues, or processing mistakes. Missing values can disrupt Machine Learning algorithms as they usually require complete datasets. Handling missing values is crucial to ensure accurate and effective analysis and model performance.", unsafe_allow_html=True)
-    new_line()
+    # Display example questions
+    with st.sidebar:
+        st.image("https://via.placeholder.com/150x150.png?text=DataVue", width=150)
+        st.markdown("### Example Questions")
+        for q in example_questions:
+            if st.button(q, key=f"btn_{q}"):
+                st.session_state.question = q
 
-    # Why Handle Missing Values?
-    st.markdown("#### ❓ Why Should We Handle Missing Values?")
-    st.markdown("Handling missing values is essential because most Machine Learning algorithms cannot process incomplete data. Ignoring or improperly managing these missing values can lead to biased, inaccurate, or invalid results. Proper handling ensures that the data is clean and usable for analysis and modeling.", unsafe_allow_html=True)
-    new_line()
-
-    # Methods to Handle Missing Values
-    st.markdown("#### 🧐 How to Handle Missing Values?")
-    st.markdown("Here are some common methods for dealing with missing values:")
-    new_line()
-
-    st.markdown("#### 🌎 General Approaches")
-    st.markdown("- **Drop Missing Values:** Removing rows or columns with missing values is simple but may lead to loss of data. This method is generally used when missing values are minimal.")
-    st.markdown("  - **Drop Rows:** Suitable when only a few rows are missing values.")
-    st.markdown("  - **Drop Columns:** Suitable when a column has a high percentage of missing values, typically more than 50%.")
-
-    st.markdown("##### 🔷 For Numerical Features")
-    st.markdown("- **Fill with the Mean:** Use the mean of the feature to fill missing values. This method works well when there are no significant outliers.")
-    st.latex(r''' \mu = \frac{1}{n} \sum_{i=1}^{n} x_i ''')
-    new_line()
-
-    st.markdown("- **Fill with the Median:** Use the median to handle missing values. This method is robust against outliers.")
-    st.latex(r''' \tilde{x} = \begin{cases} x_{\frac{n+1}{2}} & \text{if } n \text{ is odd} \\ \frac{x_{\frac{n}{2}} + x_{\frac{n}{2}+1}}{2} & \text{if } n \text{ is even} \end{cases} ''')
-    new_line()
-
-    st.markdown("- **Fill with the Mode:** Use the most frequent value for categorical features.")
-    st.latex(r''' mode = \text{the most frequent value} ''')
-    new_line()
-
-    st.markdown("##### 🔶 For Categorical Features")
-    st.markdown("- **Fill with the Most Frequent Value:** This method replaces missing values with the most common value in the feature.")
-    st.latex(r''' mode = \text{the most frequent value} ''')
-    new_line()
-
-    # How to Handle Missing Values in Python?
-    st.markdown("#### 🐍 How to Handle Missing Values in Python?")
-    st.markdown("Let's explore how to implement these methods in Python.")
-    new_line()
+    # User input
+    question = st.text_input("Ask a data science or EDA question:", key="question", help="Type your question here or select an example from the sidebar")
     
-    # Drop the rows that contain missing values
-    st.markdown("- **Drop Rows with Missing Values**")
-    st.code("""df.dropna(axis=0, inplace=True)""", language="python")
-    new_line()
+    if st.button("Get Answer", key="get_answer"):
+        if question:
+            with st.spinner("DataVue is thinking..."):
+                try:
+                    # Construct a more specific prompt
+                    prompt = f"""As an AI assistant specializing in data science and exploratory data analysis, please answer the following question:
 
-    # Drop the columns that contain missing values
-    st.markdown("- **Drop Columns with Missing Values**")
-    st.code("""df.dropna(axis=1, inplace=True)""", language="python")
-    new_line()
-    
-    # Fill with mean
-    st.markdown("- **Fill with the Mean**")
-    st.code("""df[feature] = df[feature].fillna(df[feature].mean())""", language="python")
-    new_line()
+                    {question}
 
-    # Fill with median
-    st.markdown("- **Fill with the Median**")
-    st.code("""df[feature] = df[feature].fillna(df[feature].median())""", language="python")
-    new_line()
+                    Please provide a concise explanation, along with:
+                    1. A brief code example if applicable
+                    2. Suggestions for relevant Python libraries or tools
+                    3. A recommended online resource for further learning"""
 
-    # Fill with mode
-    st.markdown("- **Fill with the Mode**")
-    st.code("""df[feature] = df[feature].fillna(df[feature].mode()[0])""", language="python")
-    new_line()
+                    chat_completion = client.chat.completions.create(
+                        messages=[
+                            {"role": "system", "content": "You are DataVue, an AI assistant specializing in data science and exploratory data analysis."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        model="llama-3.3-70b-versatile",
+                    )
+                    
+                    response = chat_completion.choices[0].message.content
+                    
+                    # Display the response in a more structured way
+                    st.markdown("<h2 class='subheader'>DataVue's Response:</h2>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='ai-response'>{response}</div>", unsafe_allow_html=True)
+                    
+                    # Add a feedback section
+                    st.markdown("<h3 class='subheader'>Was this response helpful?</h3>", unsafe_allow_html=True)
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.button("👍 Yes", key="feedback_yes"):
+                            st.success("Thank you for your feedback!")
+                    with col2:
+                        if st.button("👎 No", key="feedback_no"):
+                            st.info("We're sorry the response wasn't helpful. Please try rephrasing your question or check our resources section for more information.")
+                    
+                    # Log the interaction
+                    with open("interaction_log.txt", "a") as log_file:
+                        log_file.write(f"{datetime.now()} - Question: {question}\n")
+                
+                except Exception as e:
+                    st.error(f"An error occurred: {str(e)}")
+        else:
+            st.warning("Please enter a question or select an example question from the sidebar.")
 
-    # Fill with the most frequent value
-    st.markdown("- **Fill with the Most Frequent Value**")
-    st.code("""df[feature] = df[feature].fillna(df[feature].mode()[0])""", language="python")
-
-    # Perform Missing Values on the Dataset
-    st.divider()
-    st.markdown("#### Select Dataset to Perform Filling Missing Values")
-    dataset = st.selectbox("Select Dataset", ["Select", "Iris", "Titanic", "Wine Quality"])
-
-    if dataset == "Select":
-        pass
-    
-    elif dataset == "Iris":
-        from sklearn.datasets import load_iris
-        
-        df  = load_iris()
-        df = pd.DataFrame(df.data, columns=df.feature_names)
-        df['target'] = load_iris().target
-        st.markdown("#### The Dataset")
-        st.write(df)
-
-        st.markdown("#### The Missing Values:")
-        st.markdown("The Missing Values in the Dataset are:")
-        st.code("""df.isnull().sum()""", language="python")
-        st.write(df.isnull().sum())
-        st.markdown("The Dataset has no missing values. Thus, no handling of missing values is required.")
-        new_line()
-
-        congratulation("missing_iris")
-
-    elif dataset == "Titanic":
-        import seaborn as sns
-
-        # Load Titanic dataset using Seaborn
-        df = sns.load_dataset('titanic')
-        st.markdown("#### The Dataset")
-        st.write(df.head())
-
-        st.markdown("#### The Missing Values:")
-        st.markdown("The Missing Values in the Dataset are:")
-        st.code("""df.isnull().sum()""", language="python")
-        st.write(df.isnull().sum())
-        st.markdown("The Dataset has missing values and needs handling.")
-        st.code("""null_val_df = df.isnull().sum()
-null_val_df[null_val_df>0]""", language="python")
-        null_val_tit = df.isnull().sum()
-        st.write(null_val_tit[null_val_tit>0])
-        new_line()
-
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.markdown("<h5 align='left'> <b>Age</b> Feature</h5>", unsafe_allow_html=True)
-            new_line()
-            st.write(f"No. missing values: **{df[['age']].isnull().sum().values[0]}** ")
-            st.write(df[['age']].describe().T[['mean','50%']])
-            st.write("No Outliers")
-            st.markdown("The used method: :green[Mean]")
-
-        with col2:
-            st.markdown("<h5 align='left'> <b> Cabin </b> Feature</h5>", unsafe_allow_html=True)
-            new_line()
-            st.write(f"No. missing values: **687**")
-            st.code("df[['cabin']].isnull().sum().values[0] / len(df)")
-            st.write(f"The Percentage of missing: **{687/len(df):.2f}%**")
-            st.write("The used method: :green[Drop the Column]")
-
-        with col3:
-            st.markdown("<h5 align='left'> Embarked Feature</h5>", unsafe_allow_html=True)
-            new_line()
-            st.write("No. missing values: **2**")
-            new_line()
-            st.write("Categorical Feature")
-            new_line()
-            st.write("The used method: :green[Fill with the Most Frequent Value]")
-
-        # Fill the age feature with the mean
-        st.divider()
-        st.markdown("#### Filling the Missing Values")
-        new_line()
-
-        st.markdown("##### Fill the `Age` Feature with the `Mean`")
-        st.code("""df['age'] = df['age'].fillna(df['age'].mean())""", language="python")
-        new_line()
-
-        # Drop the Cabin feature
-        st.markdown("##### Drop the `Cabin` Feature")
-        st.code("""df.drop('cabin', axis=1, inplace=True)""", language="python")
-        new_line()
-
-        # Fill the Embarked feature with the most frequent value
-        st.markdown("##### Fill the `Embarked` Feature with the Most Frequent Value")
-        st.code("""df['embarked'] = df['embarked'].fillna(df['embarked'].mode()[0])""", language="python")
-        new_line()
-
-        congratulation("missing_titanic")
-        
-    elif dataset == "Wine Quality":
-        from sklearn.datasets import load_wine
-
-        df = load_wine()
-        df = pd.DataFrame(df.data, columns=df.feature_names)
-        df['target'] = load_wine().target
-        st.markdown("#### The Dataset")
-        st.write(df)
-
-        st.markdown("#### The Missing Values:")
-        st.markdown("The Missing Values in the Dataset are:")
-        st.code("""df.isnull().sum()""", language="python")
-        st.write(df.isnull().sum())
-        st.markdown("The Dataset has no missing values. Thus, no handling of missing values is required.")
-        new_line()
-
-        congratulation("missing_wine")
-
-    new_line()
-    st.markdown("<h4 align='center'> 📚 Online Study Resources </h4>", unsafe_allow_html=True)
-    st.markdown("""
-    - [Khan Academy: Statistics and Probability](https://www.khanacademy.org/math/statistics-probability) - Provides a solid foundation in statistics, including handling missing data.
-    - [Coursera: Data Science Specialization](https://www.coursera.org/specializations/jhu-data-science) - Offers courses covering data cleaning and preprocessing techniques, including handling missing values.
-    - [Towards Data Science: Handling Missing Values](https://towardsdatascience.com/handling-missing-values-in-machine-learning-8e5d7b3c9d7d) - An article discussing various techniques to handle missing values with practical examples.
-    - [Scikit-learn Documentation: Missing Values](https://scikit-learn.org/stable/modules/impute.html) - Official documentation on handling missing values with Scikit-learn’s impute module.
-    - [DataCamp: Handling Missing Values](https://www.datacamp.com/community/tutorials/missing-values-python) - A comprehensive guide on different strategies for handling missing values in Python.
-    """)
-    new_line()
-    st.markdown("Congratulations, you have learned about handling missing values. Keep practicing to master these techniques!")
+    # Additional resources
+    with st.sidebar:
+        st.markdown("---")
+        st.markdown("### Useful Resources")
+        resources = {
+            "Pandas Documentation": "https://pandas.pydata.org/docs/",
+            "Scikit-learn User Guide": "https://scikit-learn.org/stable/user_guide.html",
+            "Seaborn Tutorial": "https://seaborn.pydata.org/tutorial.html",
+            "Kaggle Learn": "https://www.kaggle.com/learn"
+        }
+        for name, url in resources.items():
+            st.markdown(f"- [{name}]({url})")
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-import seaborn as sns
-
-# Categorical Features
-with tabs[3]:
-
-    new_line()
-    st.markdown("<h2 align='center'> 🔠 Categorical Features </h1>", unsafe_allow_html=True)
-
-    # What are Categorical Features?
-    new_line()
-    st.markdown("Categorical features are variables that take on a limited and usually fixed number of possible values. They are also known as nominal features and can be divided into two types: **Ordinal Features** and **Nominal Features**.", unsafe_allow_html=True)
-    new_line()
-
-    # Ordinal Features
-    st.markdown("#### 🔷 Ordinal Features")
-    st.markdown("Ordinal features are categorical features with a defined order or ranking among their values. For example, the `Size` feature might have values like `Small`, `Medium`, and `Large`. These values have a natural ordering: `Small` < `Medium` < `Large`. Another example is `Education`, which could have values like `High School`, `Bachelor`, `Master`, and `Ph.D`, with a similar order: `High School` < `Bachelor` < `Master` < `Ph.D`.", unsafe_allow_html=True)
-    new_line()
-
-    # Nominal Features
-    st.markdown("#### 🔶 Nominal Features")
-    st.markdown("Nominal features are categorical features where the values have no intrinsic order. For instance, the `Gender` feature with values like `Male` and `Female` has no inherent ranking or order.", unsafe_allow_html=True)
-    new_line()
-
-    # How to Handle Categorical Features?
-    st.markdown("#### 🧐 How to Handle Categorical Features?")
-    st.markdown("Handling categorical features often involves converting them into numerical values for machine learning models. Here are common methods to handle categorical features:")
-
-    st.markdown("- **One Hot Encoding**")
-    st.markdown("- **Ordinal Encoding**")
-    st.markdown("- **Label Encoding**")
-    st.markdown("- **Count Frequency Encoding**")
-    st.markdown("In the following sections, we will explore each method in detail, demonstrating how to implement them in Python.")
-
-    st.divider()
-
-    # One Hot Encoding
-    st.subheader("🥇 One Hot Encoding")
-    st.markdown("One Hot Encoding converts categorical values into a binary matrix where each category is represented by a unique column. This method is ideal for nominal features where there is no order. Each category is represented as a binary vector of length equal to the number of categories.", unsafe_allow_html=True)
-    new_line()
-
-    col1, col2 = st.columns(2)
-    with col1:
-        st.write("**Before One Hot Encoding**")
-        st.dataframe(pd.DataFrame(np.array(['a','b','c','b','a']), columns=['Feature']), width=250, height=250)
-
-    with col2:
-        st.write("**After One Hot Encoding**")
-        st.dataframe(pd.DataFrame(np.array([[1,0,0],[0,1,0],[0,0,1],[0,1,0],[1,0,0]]), columns=['Feature_a', 'Feature_b', 'Feature_c']), width=250, height=250)
-
-    new_line()
-    st.write("In One Hot Encoding, each category value is converted into a binary vector. For example, the value `a` is encoded as `[1,0,0]`, `b` as `[0,1,0]`, and `c` as `[0,0,1]`.")
-    st.code("""from sklearn.preprocessing import OneHotEncoder
-encoder = OneHotEncoder(sparse=False)
-df_encoded = encoder.fit_transform(df[['Feature']])
-df_encoded = pd.DataFrame(df_encoded, columns=encoder.get_feature_names_out())""", language="python")
-    new_line()
-
-    # Ordinal Encoding
-    st.subheader("♾️ Ordinal Encoding")
-    st.markdown("Ordinal Encoding converts categorical values into numerical values based on their order. This method is suitable for ordinal features where the order of the categories is meaningful. For instance, `Small`, `Medium`, and `Large` can be encoded as `1`, `2`, and `3`, respectively.", unsafe_allow_html=True)
-    new_line()
-
-    col1, col2 = st.columns(2)
-    with col1:
-        st.write("**Before Ordinal Encoding**")
+if __name__ == "__main__":
+    ai_assistant()ore Ordinal Encoding**")
         st.dataframe(pd.DataFrame(np.array(['a','b','c','b','a']), columns=['Feature']), width=250, height=250)
 
     with col2:

@@ -1,12 +1,21 @@
-Streamlit
-Groq
+streamlit
+groq
 plotly
 pandas
 numpy
 seaborn
 matplotlib
 scikit-learn
+ydata_profiling
 sweetviz
 setuptools
 kaleido
 tqdm
+# Optional dependencies for additional features
+# Uncomment the following lines if you need these features
+# openai
+# transformers
+# nltk
+# Uncomment the following lines if you need these features
+# tensorflow
+# torch
