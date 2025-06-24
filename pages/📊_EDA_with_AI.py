@@ -235,29 +235,6 @@ if st.session_state.data_loaded:
         #     else:
         #         st.warning("Pairplot requires at least two numerical columns.")
 
-    # AI-Driven Insights Section
-    st.markdown("<h2 class='sub-header'>💡 AI-Driven Insights</h2>", unsafe_allow_html=True)
-
-    sample_data = st.session_state.df.head().to_string()
-    user_prompt = st.text_input("Ask AI to provide insights or recommendations about your data",
-                                "What are the key trends in this dataset?")
-    ai_prompt = f"Here's a sample of the dataset:\n\n{sample_data}\n\n{user_prompt}"
-
-    if st.button("Generate AI Insights", key="generate_insights"):
-        try:
-            with st.spinner("Generating AI insights..."):
-                chat_completion = client.chat.completions.create(
-                    messages=[
-                        {"role": "user", "content": ai_prompt},
-                    ],
-                    model="llama-3.1-70b-versatile",
-                )
-            st.markdown("<h3 class='sub-header'>🔍 AI-Generated Insight</h3>", unsafe_allow_html=True)
-            st.write(chat_completion.choices[0].message.content)
-            st.session_state.ai_insights = chat_completion.choices[0].message.content
-        except Exception as e:
-            st.error(f"An error occurred while generating AI insights: {e}")
-
     # Automated Report Generation Section
     st.markdown("<h2 class='sub-header'>📊 Automated Report Generation</h2>", unsafe_allow_html=True)
 

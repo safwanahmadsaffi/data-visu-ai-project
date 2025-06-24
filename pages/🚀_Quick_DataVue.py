@@ -1,222 +1,133 @@
+# 🚀 Quick_DataVue.py
+# Streamlit EDA app that avoids ydata-profiling and re-uses existing helpers.
 
-import streamlit as st
+import base64
+import io
+import os
+import tempfile
+
 import pandas as pd
 import seaborn as sns
-import ydata_profiling as pp
-import sweetviz as sv
-import plotly.express as px
-import base64
-import os
-from io import BytesIO
-from tempfile import NamedTemporaryFile
-from streamlit.components.v1 import html
+import matplotlib.pyplot as plt
+import streamlit as st
 
+# ──────────────────────────────────────────────
+# 🔧 1. HELPER FUNCTIONS  (your existing code + a few extras)
+# ──────────────────────────────────────────────
 
-
-# Set page configuration
-st.set_page_config(page_title="DataVue - Auto EDA", page_icon="📊", layout="wide")
-
-# Load custom CSS
-def load_css():
-    st.markdown(r"""
-    <style>
-        .stApp {
-            background-color: #f0f8ff;
-        }
-        .main-header {
-            color: #1e90ff; 
-            font-size: 40px; 
-            font-weight: bold; 
-            text-align: center; 
-            margin-bottom: 30px;
-        }
-        .sub-header {
-            color: #4169e1; 
-            font-size: 30px; 
-            font-weight: bold; 
-            margin-top: 20px; 
-            margin-bottom: 10px;
-        }
-        .section {
-            background-color: #e6f2ff; 
-            border-radius: 10px; 
-            padding: 20px; 
-            margin-bottom: 20px;
-        }
-        .button {
-            background-color: #1e90ff; 
-            color: white; 
-            font-weight: bold; 
-            border-radius: 5px; 
-            padding: 10px 20px;
-        }
-        .button:hover {
-            background-color: #4169e1;
-        }
-        .error {
-            color: #ff4500; 
-            font-weight: bold;
-        }
-        .success {
-            color: #32cd32; 
-            font-weight: bold;
-        }
-        .stSidebar {
-            background-color: #e6f2ff;
-        }
-    </style>
-    """, unsafe_allow_html=True)
-
-# Load CSS
-load_css()
+def load_css(css_file: str = "style.css"):
+    """
+    Load a local CSS file (if present) to style the app.
+    """
+    if os.path.exists(css_file):
+        with open(css_file, "r") as f:
+            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 def load_example_data(dataset_name):
+    """
+    Ship with two built-in demo datasets so users can play without uploading.
+    """
     if dataset_name == "Titanic":
         return sns.load_dataset("titanic")
     elif dataset_name == "Iris":
         return sns.load_dataset("iris")
+    return pd.DataFrame()
 
 def get_download_link(file_name, link_text):
+    """
+    Base64-encode a local file so the user can download the generated report.
+    """
     with open(file_name, "rb") as f:
-        bytes = f.read()
-        b64 = base64.b64encode(bytes).decode()
-        href = f'<a href="data:file/html;base64,{b64}" download="{file_name}">{link_text}</a>'
-        return href
+        b64 = base64.b64encode(f.read()).decode()
+    href = f'<a href="data:file/html;base64,{b64}" download="{file_name}">{link_text}</a>'
+    return href
+
+def generate_summary_report(df: pd.DataFrame, file_name="summary_report.html"):
+    """
+    Create a very lightweight HTML summary (describe table only) for download.
+    """
+    html = df.describe(include="all").to_html(classes="table table-striped", border=0)
+    with open(file_name, "w") as f:
+        f.write("<h2>Summary Statistics</h2>\n" + html)
+    return file_name
 
 def auto_eda():
+    """
+    Main UI + logic; placed in its own function so you can call it
+    from Multi-Page Streamlit setups if you wish.
+    """
+    # ── Sidebar UI ───────────────────────────────
     st.sidebar.image("https://via.placeholder.com/150x150.png?text=DataVue", width=150)
     st.sidebar.title("DataVue")
     st.sidebar.subheader("Auto EDA Tool")
 
-    # Main content
-    st.markdown("<h1 class='main-header'>🔍 DataVue: Automated EDA 📊</h1>", unsafe_allow_html=True)
-    st.write("Welcome to **DataVue's Auto EDA** tool! Explore your data with ease and gain valuable insights.")
+    # Upload or pick demo data
+    st.sidebar.markdown("### Load data")
+    demo_choice = st.sidebar.selectbox("Or choose a demo dataset", ["None", "Titanic", "Iris"])
+    uploaded_file = st.sidebar.file_uploader("Upload CSV", type=["csv"])
 
-    # Data selection
-    data_source = st.sidebar.radio("Choose data source:", ("Upload your own", "Use example dataset"))
-
-    if data_source == "Upload your own":
-        uploaded_file = st.sidebar.file_uploader("Choose a file 📁", type=["csv", "xlsx"])
-        if uploaded_file:
-            if uploaded_file.name.endswith('.csv'):
-                df = pd.read_csv(uploaded_file)
-            elif uploaded_file.name.endswith('.xlsx'):
-                df = pd.read_excel(uploaded_file)
-            st.sidebar.success(f"Successfully loaded: {uploaded_file.name}")
+    # Decide which dataframe to use
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
+        data_source = f"Uploaded file • `{uploaded_file.name}`"
+    elif demo_choice != "None":
+        df = load_example_data(demo_choice)
+        data_source = f"Demo dataset • **{demo_choice}**"
     else:
-        example_dataset = st.sidebar.selectbox("Select an example dataset:", 
-                                               ("Titanic", "Iris"))
-        df = load_example_data(example_dataset)
-        st.sidebar.success(f"Loaded example dataset: {example_dataset}")
+        st.info("⬅️  Upload a CSV or select a demo dataset to get started.")
+        return
 
-    if 'df' in locals():
-        st.write(f"<div class='section'><strong>Data Preview:</strong></div>", unsafe_allow_html=True)
-        st.write(df.head())
+    # ── Main Page ────────────────────────────────
+    st.title("🚀 Quick DataVue – Exploratory Data Analysis Dashboard")
+    st.caption(f"Data source: {data_source}")
 
-        # Basic info
-        st.markdown("<div class='section'><h2 class='sub-header'>📋 Basic Information</h2></div>", unsafe_allow_html=True)
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Rows", df.shape[0])
-        col2.metric("Columns", df.shape[1])
-        col3.metric("Missing Values", df.isnull().sum().sum())
+    # 1. Quick glance
+    st.header("🔎 Preview & Shape")
+    st.write(df.head())
+    st.write(f"Shape: **{df.shape[0]} rows × {df.shape[1]} columns**")
 
-        # Data types
-        st.markdown("<div class='section'><h2 class='sub-header'>🏷️ Data Types</h2></div>", unsafe_allow_html=True)
-        st.write(df.dtypes)
+    # 2. Summary stats
+    st.header("📊 Summary Statistics")
+    st.dataframe(df.describe(include="all"))
 
-        # Summary statistics
-        st.markdown("<div class='section'><h2 class='sub-header'>📊 Summary Statistics</h2></div>", unsafe_allow_html=True)
-        st.write(df.describe())
+    # 3. Missing-value scan
+    st.header("🧱 Missing Values")
+    na_counts = df.isna().sum().sort_values(ascending=False)
+    st.bar_chart(na_counts)
 
-        # Missing values
-        st.markdown("<div class='section'><h2 class='sub-header'>🕳️ Missing Values</h2></div>", unsafe_allow_html=True)
-        missing_data = df.isnull().sum().reset_index()
-        missing_data.columns = ['Column', 'Missing Values']
-        missing_data['Percentage'] = round(missing_data['Missing Values'] / len(df) * 100, 2)
-        st.write(missing_data)
+    # 4. Correlation heatmap (numeric only)
+    st.header("📈 Correlation Heatmap")
+    num_df = df.select_dtypes(include=["int64", "float64"])
+    if num_df.empty:
+        st.warning("No numeric columns available for correlation.")
+    else:
+        fig, ax = plt.subplots(figsize=(8, 5))
+        sns.heatmap(num_df.corr(), annot=True, cmap="coolwarm", ax=ax)
+        st.pyplot(fig)
 
-        # Correlation matrix
-        st.markdown("<div class='section'><h2 class='sub-header'>🔗 Correlation Matrix</h2></div>", unsafe_allow_html=True)
-        numeric_df = df.select_dtypes(include=['float64', 'int64'])
-        if not numeric_df.empty:
-            corr_matrix = numeric_df.corr()
-            fig = px.imshow(corr_matrix, color_continuous_scale='RdBu_r', zmin=-1, zmax=1)
-            st.plotly_chart(fig)
-        else:
-            st.write("No numeric columns available for correlation matrix.")
+    # 5. Distributions / value counts
+    st.header("📌 Column Distributions")
+    column = st.selectbox("Pick a column", df.columns)
+    if pd.api.types.is_numeric_dtype(df[column]):
+        fig2, ax2 = plt.subplots()
+        sns.histplot(df[column].dropna(), kde=True, ax=ax2)
+        st.pyplot(fig2)
+    else:
+        st.bar_chart(df[column].value_counts())
 
-        # Distribution plots
-        st.markdown("<div class='section'><h2 class='sub-header'>📉 Distribution Plots</h2></div>", unsafe_allow_html=True)
-        numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
-        if not numeric_cols.empty:
-            selected_col = st.selectbox("Select a column for distribution plot:", numeric_cols)
-            fig = px.histogram(df, x=selected_col, marginal="box")
-            st.plotly_chart(fig)
-        else:
-            st.write("No numeric columns available for distribution plots.")
+    # 6. Download tiny HTML summary
+    st.header("📥 Download Report")
+    if st.button("Generate & Download"):
+        html_path = generate_summary_report(df)
+        st.success("Report generated!")
+        st.markdown(get_download_link(html_path, "⬇️ Download summary_report.html"), unsafe_allow_html=True)
 
-        # Advanced EDA tools
-        st.markdown("<div class='section'><h2 class='sub-header'>🚀 Advanced EDA Tools</h2></div>", unsafe_allow_html=True)
-        tool = st.radio("Select an advanced EDA tool:", ("Pandas Profiling", "Sweetviz"))
-
-        if tool == "Pandas Profiling":
-            if st.button("Generate Pandas Profiling Report", key="pandas_button"):
-                with st.spinner("Generating Pandas Profiling Report..."):
-                    try:
-                        # Create a NamedTemporaryFile for the Pandas Profiling report
-                        with NamedTemporaryFile(delete=False, suffix=".html") as temp_file:
-                            profile = pp.ProfileReport(df, title="Pandas Profiling Report", explorative=True)
-                            profile.to_file(temp_file.name)
-                            temp_file.seek(0)
-                            report_html = temp_file.read().decode()
-
-                        st.components.v1.html(report_html, height=600, scrolling=True)
-                        st.success("Pandas Profiling report generated.")
-                        st.markdown(get_download_link(temp_file.name, "📥 Download Pandas Profiling Report"), unsafe_allow_html=True)
-
-                    except Exception as e:
-                        st.error(f"Error generating Pandas Profiling report: {e}")
-
-        elif tool == "Sweetviz":
-            if st.button("Generate Sweetviz Report", key="sweetviz_button"):
-                with st.spinner("Generating Sweetviz Report..."):
-                    try:
-                        # Create a NamedTemporaryFile for the Sweetviz report
-                        with NamedTemporaryFile(delete=False, suffix=".html") as temp_file:
-                            sweet_report = sv.analyze(df)
-                            sweet_report.show_html(temp_file.name)
-                            temp_file.seek(0)
-                            report_html = temp_file.read().decode()
-
-                        st.components.v1.html(report_html, height=600, scrolling=True)
-                        st.success("Sweetviz report generated.")
-                        st.markdown(get_download_link(temp_file.name, "📥 Download Sweetviz Report"), unsafe_allow_html=True)
-
-                    except Exception as e:
-                        st.error(f"Error generating Sweetviz report: {e}")
-
-        # Download button for data
-        csv = df.to_csv(index=False)
-        b64 = base64.b64encode(csv.encode()).decode()
-        href = f'<a class="button" href="data:file/csv;base64,{b64}" download="datavue_data.csv">📥 Download Data as CSV</a>'
-        st.markdown(href, unsafe_allow_html=True)
-
-    # Explanations
-    with st.expander("ℹ️ About DataVue Auto EDA"):
-        st.write("""
-        DataVue's Auto EDA tool helps you quickly explore and understand your data:
-        
-        1. **Data Loading**: Upload your own CSV/Excel file or choose from example datasets (Titanic or Iris).
-        2. **Basic Info**: Get an overview of your data's shape and basic statistics.
-        3. **Data Types**: Understand the types of data in each column.
-        4. **Missing Values**: Identify and quantify missing data.
-        5. **Correlation Matrix**: Visualize relationships between numeric variables.
-        6. **Distribution Plots**: Explore the distribution of individual variables.
-        7. **Advanced EDA**: Use Pandas Profiling or Sweetviz for in-depth analysis.
-        8. **Download**: Export your data and generated reports for further analysis.
-
-        Explore these features to gain valuable insights into your dataset!
-        """)
+# ──────────────────────────────────────────────
+# 🚀 APP ENTRYPOINT
+# ──────────────────────────────────────────────
+def main():
+    load_css()        # Optional custom styles
+    auto_eda()        # Build EDA UI
 
 if __name__ == "__main__":
-    auto_eda()
+    main()
