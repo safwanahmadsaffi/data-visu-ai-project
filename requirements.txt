@@ -1,0 +1,12 @@
+Streamlit
+Groq
+plotly
+pandas
+numpy
+seaborn
+matplotlib
+scikit-learn
+sweetviz
+setuptools
+kaleido
+tqdm
